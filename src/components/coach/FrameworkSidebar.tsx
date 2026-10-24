@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Check, ChevronRight, NotebookPen } from "lucide-react"
-import type { InterviewType } from "./InterviewModeSelector"
+import type { CallType } from "./SalesCallSelector"
 
 export interface FrameworkStep {
   id: string
@@ -14,52 +14,53 @@ export interface Framework {
   steps: FrameworkStep[]
 }
 
-/** Built-in frameworks keyed by interview type. The coach surfaces the one
- *  matching the active session; "mixed" falls back to the case structure. */
-export const FRAMEWORKS: Record<InterviewType, Framework> = {
-  case: {
-    name: "Case structure",
-    tagline: "A clean issue tree beats a clever answer.",
+/** Built-in sales playbooks keyed by call type. The assistant surfaces the one
+ *  matching the active session. */
+export const FRAMEWORKS: Record<CallType, Framework> = {
+  discovery: {
+    name: "Discovery structure",
+    tagline: "Diagnose before you prescribe. Questions over pitches.",
     steps: [
-      { id: "clarify", title: "Clarify the question", detail: "Restate the ask, confirm the objective and the metric of success." },
-      { id: "structure", title: "Lay out a structure", detail: "2–4 MECE buckets. Ask for a moment to think before you speak." },
-      { id: "hypothesis", title: "State a hypothesis", detail: "Where do you think the answer lands, and what would prove it?" },
-      { id: "analyze", title: "Work the buckets", detail: "Drive to numbers. Narrate your logic as you go." },
-      { id: "synthesize", title: "Synthesize", detail: "So-what first, then the supporting two or three reasons." },
-      { id: "recommend", title: "Recommend + risks", detail: "A clear call, the next step, and what could break it." }
+      { id: "rapport", title: "Open + set the agenda", detail: "Confirm time, state the goal of the call, earn the right to ask." },
+      { id: "current", title: "Map the current state", detail: "How do they do this today? What tools, who's involved, what volume?" },
+      { id: "pain", title: "Surface the pain", detail: "What's not working, what does it cost them, why now?" },
+      { id: "impact", title: "Quantify the impact", detail: "Put a number on the problem — time, money, risk." },
+      { id: "process", title: "Map the buying process", detail: "Decision makers, budget, timeline, what else they're evaluating." },
+      { id: "next", title: "Agree a next step", detail: "A concrete, scheduled next action before you hang up." }
     ]
   },
-  technical: {
-    name: "Technical structure",
-    tagline: "Say the approach out loud before you touch the detail.",
+  demo: {
+    name: "Demo structure",
+    tagline: "Show the one thing that solves their pain, not every feature.",
     steps: [
-      { id: "restate", title: "Restate + assumptions", detail: "Confirm inputs, outputs, scale, and edge cases." },
-      { id: "approach", title: "Name the approach", detail: "Brute force first, then the optimization and its tradeoff." },
-      { id: "plan", title: "Plan the steps", detail: "Break into stages before writing or estimating anything." },
-      { id: "execute", title: "Execute cleanly", detail: "Keep it readable. Talk through each decision." },
-      { id: "verify", title: "Test + complexity", detail: "Walk an example, cover edge cases, state time/space cost." }
+      { id: "recap", title: "Recap their pain", detail: "Replay what you heard so they know this is tailored." },
+      { id: "framing", title: "Frame the outcome", detail: "Lead with the result, not the UI tour." },
+      { id: "show", title: "Show to the pain", detail: "Demo only the paths that map to their problem." },
+      { id: "proof", title: "Drop proof points", detail: "A relevant customer, a metric, a before/after." },
+      { id: "checkin", title: "Check for resonance", detail: "\"How would that work for your team?\" Pause and listen." },
+      { id: "next", title: "Agree a next step", detail: "Trial, stakeholder intro, or proposal — name the date." }
     ]
   },
-  behavioral: {
-    name: "STAR structure",
-    tagline: "Specific beats impressive. Numbers beat adjectives.",
+  "objection-handling": {
+    name: "Objection structure",
+    tagline: "Acknowledge first. Never argue — clarify, then reframe.",
     steps: [
-      { id: "situation", title: "Situation", detail: "One or two lines of context. Where, when, your role." },
-      { id: "task", title: "Task", detail: "The concrete goal and why it mattered." },
-      { id: "action", title: "Action", detail: "What YOU did — first person, specific decisions." },
-      { id: "result", title: "Result", detail: "Quantified outcome, then the lesson you carried forward." }
+      { id: "listen", title: "Hear it fully", detail: "Let them finish. Don't jump to defend." },
+      { id: "acknowledge", title: "Acknowledge", detail: "\"That's fair\" — lower the temperature before responding." },
+      { id: "clarify", title: "Clarify the real concern", detail: "Is price the issue, or value? Ask one isolating question." },
+      { id: "respond", title: "Respond with proof", detail: "Reframe against value or risk, back it with evidence." },
+      { id: "confirm", title: "Confirm it's resolved", detail: "\"Does that address it?\" Don't assume — check." }
     ]
   },
-  mixed: {
-    name: "Case structure",
-    tagline: "A clean issue tree beats a clever answer.",
+  closing: {
+    name: "Closing structure",
+    tagline: "Ask for the business. Silence after the ask is your friend.",
     steps: [
-      { id: "clarify", title: "Clarify the question", detail: "Restate the ask, confirm the objective and the metric of success." },
-      { id: "structure", title: "Lay out a structure", detail: "2–4 MECE buckets. Ask for a moment to think before you speak." },
-      { id: "hypothesis", title: "State a hypothesis", detail: "Where do you think the answer lands, and what would prove it?" },
-      { id: "analyze", title: "Work the buckets", detail: "Drive to numbers. Narrate your logic as you go." },
-      { id: "synthesize", title: "Synthesize", detail: "So-what first, then the supporting two or three reasons." },
-      { id: "recommend", title: "Recommend + risks", detail: "A clear call, the next step, and what could break it." }
+      { id: "summarize", title: "Summarize the value", detail: "Recap the pain, the fit, and the agreed outcome." },
+      { id: "confirm", title: "Confirm alignment", detail: "\"Anything standing between us and moving forward?\"" },
+      { id: "ask", title: "Make the ask", detail: "Direct and specific. Then stop talking." },
+      { id: "terms", title: "Handle terms", detail: "Pricing, start date, paperwork — stay concrete." },
+      { id: "next", title: "Lock the next step", detail: "Signature, kickoff date, or the exact follow-up and when." }
     ]
   }
 }
@@ -122,7 +123,7 @@ export function FrameworkSidebar({
                   <NotebookPen size={12} className="text-coral-deep" />
                 </span>
                 <h2 className="text-[10.5px] uppercase tracking-[0.16em] text-ink-subtle pt-1">
-                  Coach's notepad
+                  Playbook
                 </h2>
               </div>
               <button

@@ -15,8 +15,8 @@ import {
 import { useSpeechRecognition } from "../../lib/useSpeechRecognition"
 import { useStickyScroll } from "../../lib/useStickyScroll"
 import { Markdown } from "./Markdown"
-import type { InterviewMode } from "../../types/electron.d"
-import { InterviewModeSelector } from "../coach/InterviewModeSelector"
+import type { SalesMode } from "../../types/electron.d"
+import { SalesCallSelector } from "../coach/SalesCallSelector"
 import { FrameworkSidebar, FRAMEWORKS } from "../coach/FrameworkSidebar"
 import { SessionSummary, type SessionResult } from "../coach/SessionSummary"
 
@@ -52,18 +52,15 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
   const [showFramework, setShowFramework] = useState(true)
   const [summary, setSummary] = useState<SessionResult | null>(null)
   const [summarizing, setSummarizing] = useState(false)
-  const [interviewMode, setInterviewMode] = useState<InterviewMode>({
-    type: 'mixed',
-    persona: 'manager',
-    difficulty: 'analyst',
-    company: 'generic'
+  const [salesMode, setSalesMode] = useState<SalesMode>({
+    callType: 'discovery'
   })
 
-  // Load interview mode on mount
+  // Load sales mode on mount
   useEffect(() => {
-    window.electronAPI.getInterviewMode()
-      .then(setInterviewMode)
-      .catch((err) => console.error("[ListeningMode] getInterviewMode failed:", err))
+    window.electronAPI.getSalesMode()
+      .then(setSalesMode)
+      .catch((err) => console.error("[ListeningMode] getSalesMode failed:", err))
   }, [])
 
   // Subscribe to overlay state from main (toggled via header button or ⌘⇧O).
@@ -292,15 +289,15 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
     setSummary(null)
     try {
       const prompt = [
-        "You are scoring a mock consulting interview. Return ONLY valid JSON, no prose, matching this exact shape:",
-        '{"scores":{"structure":0-100,"communication":0-100,"technical":0-100,"business":0-100,"fit":0-100},"overall":0-100,"strengths":["..."],"improvements":["..."]}',
-        `Interview context: ${interviewMode.company} / ${interviewMode.type} / persona ${interviewMode.persona} / difficulty ${interviewMode.difficulty}.`,
-        "Score strictly against that bar. 2-4 concise items per list, each one specific line.",
+        "You are scoring a live sales call. Return ONLY valid JSON, no prose, matching this exact shape:",
+        '{"scores":{"discovery":0-100,"rapport":0-100,"objectionHandling":0-100,"value":0-100,"nextSteps":0-100},"overall":0-100,"strengths":["..."],"improvements":["..."]}',
+        `Call context: ${salesMode.callType} call.`,
+        "Score strictly against a strong-seller bar. 2-4 concise items per list, each one specific line.",
         "",
-        "=== Candidate transcript ===",
+        "=== Salesperson transcript ===",
         spoken,
         "",
-        "=== Coach notes during the session ===",
+        "=== Assistant notes during the call ===",
         coachNotes || "(none)"
       ].join("\n")
 
@@ -318,7 +315,7 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
     } catch (err) {
       console.error("[ListeningMode] summary failed:", err)
       setSummary({
-        scores: { structure: 0, communication: 0, technical: 0, business: 0, fit: 0 },
+        scores: { discovery: 0, rapport: 0, objectionHandling: 0, value: 0, nextSteps: 0 },
         overall: 0,
         strengths: [],
         improvements: ["Couldn't generate a debrief for this session — try another run."],
@@ -327,7 +324,7 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
     } finally {
       setSummarizing(false)
     }
-  }, [transcript, turns, interviewMode, elapsed])
+  }, [transcript, turns, salesMode, elapsed])
 
   const stopSession = useCallback(async () => {
     // Flush anything still buffered so the user sees a final coach turn.
@@ -488,7 +485,7 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
             className="font-serif text-[19px] tracking-tight text-ink"
             style={{ fontVariationSettings: '"opsz" 144, "SOFT" 50' }}
           >
-            Listening
+            Live call
           </span>
           <span className="flex items-center gap-1.5 no-drag">
             <span className={`w-1.5 h-1.5 rounded-full ${chipDot}`} />
@@ -574,13 +571,13 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
         </div>
       </header>
 
-      {/* Interview mode bar */}
+      {/* Call type bar */}
       <div className="px-6 py-3 border-b border-line bg-paper-warm/40">
-        <InterviewModeSelector
-          value={interviewMode}
+        <SalesCallSelector
+          value={salesMode}
           onChange={(next) => {
-            setInterviewMode(next)
-            window.electronAPI.setInterviewMode(next).catch(console.error)
+            setSalesMode(next)
+            window.electronAPI.setSalesMode(next).catch(console.error)
           }}
           disabled={sessionLive}
         />
@@ -708,7 +705,7 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
           >
             {turns.length === 0 && !sessionLive && (
               <p className="text-[13px] text-ink-subtle italic mt-2">
-                Coach notes appear here when the session is live.
+                Aaicha's notes appear here when the session is live.
               </p>
             )}
             {turns.length === 0 && sessionLive && (
@@ -770,8 +767,8 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
                 }}
                 placeholder={
                   sessionLive
-                    ? "Whisper to coach… (e.g. 'give me a STAR example')"
-                    : "Start the session to whisper to coach"
+                    ? "Whisper to Aaicha… (e.g. 'counter the price objection')"
+                    : "Start the session to whisper to Aaicha"
                 }
                 disabled={!sessionLive}
                 className="flex-1 bg-transparent text-[13px] text-ink placeholder:text-ink-subtle focus:outline-none disabled:opacity-40"
@@ -790,7 +787,7 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
 
       {showFramework && (
         <FrameworkSidebar
-          framework={FRAMEWORKS[interviewMode.type]}
+          framework={FRAMEWORKS[salesMode.callType]}
           open={showFramework}
           onOpenChange={setShowFramework}
         />
@@ -802,7 +799,7 @@ export function ListeningMode({ onExit }: ListeningModeProps) {
         onClose={() => setSummary(null)}
         result={
           summary ?? {
-            scores: { structure: 0, communication: 0, technical: 0, business: 0, fit: 0 },
+            scores: { discovery: 0, rapport: 0, objectionHandling: 0, value: 0, nextSteps: 0 },
             overall: 0,
             strengths: [],
             improvements: []
@@ -820,19 +817,19 @@ function Welcome() {
         className="font-serif text-[34px] leading-[1.1] text-ink mb-3"
         style={{ fontVariationSettings: '"opsz" 144, "SOFT" 60, "wght" 380' }}
       >
-        Mock interview, with a quiet coach in your ear.
+        Live sales call, with a quiet assistant in your ear.
       </h1>
       <p className="text-[14px] leading-[1.6] text-ink-muted max-w-[440px]">
         Press <span className="font-medium text-ink">Start listening</span>.
-        Speak naturally as you would in the interview — the live transcript
-        appears here, and Aaicha's coaching notes appear on the right.
+        Talk with your customer as you normally would — the live transcript
+        appears here, and Aaicha's notes appear on the right.
       </p>
       <div className="mt-6 grid grid-cols-1 gap-2.5">
         <Bullet>
-          Coach chimes in after each finished thought, with either a ready-to-read answer or terse feedback.
+          Aaicha chimes in after each finished thought, with either a ready-to-say line or a terse cue.
         </Bullet>
         <Bullet>
-          Whisper a question to the coach in the box below right ("how should I phrase this?").
+          Whisper a question to Aaicha in the box below right ("how should I answer this objection?").
         </Bullet>
         <Bullet>
           Press{" "}

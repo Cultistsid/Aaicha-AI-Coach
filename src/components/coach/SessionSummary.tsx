@@ -2,11 +2,11 @@ import { Dialog, DialogContent } from "../ui/dialog"
 import { ArrowUpRight, Sparkles, X } from "lucide-react"
 
 export type ScoreDimension =
-  | "structure"
-  | "communication"
-  | "technical"
-  | "business"
-  | "fit"
+  | "discovery"
+  | "rapport"
+  | "objectionHandling"
+  | "value"
+  | "nextSteps"
 
 /** 0–100 per dimension. */
 export type Scores = Record<ScoreDimension, number>
@@ -20,11 +20,11 @@ export interface SessionResult {
 }
 
 const DIMENSIONS: { key: ScoreDimension; label: string }[] = [
-  { key: "structure", label: "Structure" },
-  { key: "communication", label: "Communication" },
-  { key: "technical", label: "Technical" },
-  { key: "business", label: "Business" },
-  { key: "fit", label: "Fit" }
+  { key: "discovery", label: "Discovery" },
+  { key: "rapport", label: "Rapport" },
+  { key: "objectionHandling", label: "Objections" },
+  { key: "value", label: "Value" },
+  { key: "nextSteps", label: "Next steps" }
 ]
 
 interface SessionSummaryProps {

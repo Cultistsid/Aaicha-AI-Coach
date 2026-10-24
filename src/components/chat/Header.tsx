@@ -74,10 +74,10 @@ export function Header({ voiceEnabled, onToggleVoice, onClear, onEnterListening,
         <button
           onClick={onEnterListening}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[12px] text-ink-muted hover:bg-paper-warm transition-colors mr-1"
-          title="Enter Listening Mode (live coach)"
+          title="Enter Live Call Mode (live sales assist)"
         >
           <Headphones size={14} />
-          <span>Listening Mode</span>
+          <span>Live Call Mode</span>
         </button>
         <button
           onClick={onToggleVoice}

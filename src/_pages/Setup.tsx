@@ -28,17 +28,17 @@ export function Setup({
   const [googleCloudLocation, setLocation] = useState(
     initial?.googleCloudLocation || "us-central1"
   )
-  const [background, setBackground] = useState("")
+  const [productDocs, setProductDocs] = useState("")
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importNotice, setImportNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Load existing background on mount
+  // Load existing product docs on mount
   useEffect(() => {
-    window.electronAPI.getBackground().then((text) => {
-      if (text) setBackground(text)
+    window.electronAPI.getProductDocs().then((text) => {
+      if (text) setProductDocs(text)
     })
   }, [])
 
@@ -65,7 +65,7 @@ export function Setup({
         googleCloudProject: googleCloudProject.trim() || undefined,
         googleCloudLocation: googleCloudLocation.trim() || undefined
       }),
-      window.electronAPI.saveBackground(background)
+      window.electronAPI.saveProductDocs(productDocs)
     ])
     setSaving(false)
     const result = !r1.success ? r1 : r2
@@ -117,7 +117,7 @@ export function Setup({
         <div className="space-y-6">
           <Field
             label="Anthropic API key"
-            hint="Required for chat, screenshots, and the live coach. Get one at console.anthropic.com/settings/keys."
+            hint="Required for chat, screenshots, and the live assistant. Get one at console.anthropic.com/settings/keys."
           >
             <div className="flex gap-2 items-stretch">
               <input
@@ -139,7 +139,7 @@ export function Setup({
 
           <Field
             label="Google Cloud project"
-            hint="Optional. Only needed for Listening Mode (live transcription). Authenticate locally first with: gcloud auth application-default login."
+            hint="Optional. Only needed for Live Call Mode (live transcription). Authenticate locally first with: gcloud auth application-default login."
           >
             <input
               id="proj"
@@ -165,15 +165,15 @@ export function Setup({
           </Field>
 
           <Field
-            label="Background — résumé + STAR story bank"
-            hint="Import your résumé (PDF or Word), then append STAR stories below. The coach uses this only for behavioral questions during Listening Mode, drawing on your real experience instead of inventing generic answers. Stored locally; sent to Claude as cached context."
+            label="Product docs — sales playbook + battlecards"
+            hint="Import a one-pager, pricing sheet, or product brief (PDF or Word), then append notes below — value props, objection responses, competitor battlecards. Aaicha uses this during Live Call Mode so its suggestions match your real product instead of generic ones. Stored locally; sent to Claude as cached context."
           >
             <div className="flex items-center gap-2 mb-2">
               <button
                 onClick={async () => {
                   setImportNotice(null)
                   setImporting(true)
-                  const r = await window.electronAPI.importBackgroundFile()
+                  const r = await window.electronAPI.importProductDocsFile()
                   setImporting(false)
                   if (r.canceled) return
                   if (!r.success) {
@@ -186,13 +186,13 @@ export function Setup({
                     return
                   }
                   // Replace or prepend, with a separator if there's existing
-                  // STAR-style content below.
-                  const banner = `=== Résumé (imported from ${r.filename ?? "file"}) ===\n`
-                  if (!background.trim()) {
-                    setBackground(banner + incoming + "\n")
+                  // content below.
+                  const banner = `=== Product doc (imported from ${r.filename ?? "file"}) ===\n`
+                  if (!productDocs.trim()) {
+                    setProductDocs(banner + incoming + "\n")
                   } else {
-                    setBackground(
-                      banner + incoming + "\n\n=== Existing notes ===\n" + background.trim() + "\n"
+                    setProductDocs(
+                      banner + incoming + "\n\n=== Existing notes ===\n" + productDocs.trim() + "\n"
                     )
                   }
                   setImportNotice(`Imported ${r.filename}. Review below.`)
@@ -200,12 +200,12 @@ export function Setup({
                 disabled={importing}
                 className="text-[12.5px] px-3 py-1.5 rounded-lg border border-line bg-white hover:bg-paper-warm transition-colors disabled:opacity-50"
               >
-                {importing ? "Reading…" : "Import résumé (PDF or Word)…"}
+                {importing ? "Reading…" : "Import product doc (PDF or Word)…"}
               </button>
-              {background && (
+              {productDocs && (
                 <button
                   onClick={() => {
-                    setBackground("")
+                    setProductDocs("")
                     setImportNotice(null)
                   }}
                   className="text-[12px] text-ink-subtle hover:text-ink px-2 py-1.5"
@@ -220,15 +220,15 @@ export function Setup({
               </div>
             )}
             <textarea
-              value={background}
-              onChange={(e) => setBackground(e.target.value)}
+              value={productDocs}
+              onChange={(e) => setProductDocs(e.target.value)}
               rows={10}
-              placeholder={`Click "Import résumé" above, then append STAR stories like:\n\n=== STAR stories ===\n\n## Conflict with a teammate\nSituation: ...\nTask: ...\nAction: ...\nResult: ...\n\n## A time I failed\n...`}
+              placeholder={`Click "Import product doc" above, then append notes like:\n\n=== Value props ===\n- Cuts onboarding time 40%\n\n=== Objection responses ===\n## "Too expensive"\nReframe against cost of status quo...\n\n=== Competitor battlecards ===\n## vs Acme\n...`}
               className="w-full font-mono text-[12px] leading-[1.5] px-3 py-2 rounded-lg border border-line bg-white focus:border-coral-soft focus:outline-none resize-y min-h-[200px]"
             />
-            {background.length > 0 && (
+            {productDocs.length > 0 && (
               <div className="text-[11px] text-ink-subtle mt-1.5 text-right">
-                {background.length.toLocaleString()} characters
+                {productDocs.length.toLocaleString()} characters
               </div>
             )}
           </Field>

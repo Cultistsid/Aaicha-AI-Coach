@@ -200,8 +200,8 @@ function Welcome({ onTakeScreenshot }: { onTakeScreenshot: () => void }) {
         Good to see you.
       </h1>
       <p className="text-[15.5px] leading-[1.6] text-ink-muted max-w-[520px] mb-8">
-        A quiet companion for the moment. Type a question, capture your screen,
-        or hold a thought out loud — Aaicha listens, reads, and responds.
+        Your sales co-pilot for the moment. Type a question, capture your
+        screen, or hold a thought out loud — Aaicha listens, reads, and responds.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -219,8 +219,8 @@ function Welcome({ onTakeScreenshot }: { onTakeScreenshot: () => void }) {
           body="Markdown, code, lists — formatted output will render nicely."
         />
         <Hint
-          title="Listening mode"
-          body="Tap the headphones to start a live mock-interview session."
+          title="Live call mode"
+          body="Tap the headphones to start a live sales-call session."
         />
       </div>
     </div>
