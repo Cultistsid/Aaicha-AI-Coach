@@ -1,0 +1,15 @@
+**Title: Security review — electron/ClaudeHelper.ts**
+
+Sid'sbuddy ran the whole file plus its callers, boss man. That's what the hell is going on — the helper itself is mostly clean, but the seams around it got holes. Fuck yeah, found five.
+
+**1. API key round-trips to the renderer — biggest leak.** `getSettings()` ships the raw `ANTHROPIC_API_KEY` over IPC (`Settings.ts:86`, exposed at `ipcHandlers.ts:35`). The renderer only needs `configured: boolean` — now the key lives in a second process, readable by any script that ever runs there (XSS, remote content, devtools). Send a masked value (`sk-...abcd`) and only accept writes, never reads.
+
+**2. Arbitrary file read → exfil to Anthropic's API.** `analyzeImageFile` reads whatever path the renderer passes (`ClaudeHelper.ts:238`) — no allowlist, no containment to a screenshots dir. Same hole in `coach:turn`: `attachedImagePath` is read with zero validation (`ipcHandlers.ts:200-203`). Worse, `imageMimeType` defaults *any* extension to `image/png` (`ClaudeHelper.ts:392-393`) — so `~/.ssh/id_rsa` gets base64'd and shipped to api.anthropic.com. Whitelist extensions and confine paths to `app.getPath("userData")/screenshots`.
+
+**3. Raw SDK errors logged and forwarded to the renderer.** `testConnection` returns `err?.message` (`ClaudeHelper.ts:409-410`), and every handler does `console.error(err)` + sends `err.message` to the renderer (`ipcHandlers.ts:157, 170, 213-215`). Provider errors can embed request context (headers, full URLs); at minimum they leak internal paths and failure details into both logs and the UI surface. Log `err.message` only, return a sanitized string.
+
+**4. Images accumulate in `coachHistory` — token/request blowup.** The sliding window keeps 36 messages (`ClaudeHelper.ts:313-314`), and each pushed turn can carry a multi-MB base64 image (`ClaudeHelper.ts:316`). Every turn re-sends all prior screenshots — unbounded request size and a quiet cost bomb. Strip or replace images in history after N turns.
+
+**5. No size limits anywhere on input.** `analyzeImageFile` slurps the whole file into memory before the API rejects it (`ClaudeHelper.ts:238, 265`); `coachTurn` accepts `transcript` and `image.base64` with no length check (`ClaudeHelper.ts:284-310`). Cap file reads (~5MB matches Anthropic's limit anyway) and cap base64 payload size at the IPC boundary.
+
+Minor, boss man: `setBackground` text goes straight into the system prompt (`ClaudeHelper.ts:341-348`) — prompt-injectionable via imported résumés, though it's the user's own data so severity is low.

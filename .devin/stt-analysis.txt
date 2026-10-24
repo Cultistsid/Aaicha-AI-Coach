@@ -1,0 +1,39 @@
+Title: STTHelper.ts memory-leak audit
+
+Boss man, Sid'sbuddy slides into the repo like a ghost through drywall — file's on the slab, flashlight out. Let's see what's leaking.File's read. Now Sid'sbuddy checks the callers — a leak don't matter if nobody's watching, but somebody's always watching.Title: STTHelper.ts — leak & cleanup audit
+
+Boss man, Sid'sbuddy found a body in `rotate()` — fuck yeah, that's what the hell is going on. Five findings, worst first.
+
+---
+
+### 1. Dead stream stuck in `this.stream` after a failed rotation — session bricks permanently
+
+In `rotate()`, `old` is captured, then `openStream()` runs. If `streamingRecognize` throws (auth expiry, network down), `openStream` swallows it, calls `scheduleRestart()` — but **`this.stream` still points at `old`**. `rotate()` then strips `old`'s listeners and ends it, so `streamDown` can never null the reference. The restart callback's guard (`this.wantOpen && !this.stream`) sees a truthy dead stream and skips reopening — forever. `writeAudio` silently drops audio into a ended stream; user has to toggle listening off/on. [STTHelper.ts:134-160](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/STTHelper.ts)
+
+Fix: null the ref during teardown — `if (this.stream === old) this.stream = null` before `old.end()`.
+
+### 2. `SpeechClient` is never `close()`d — channels leak across re-creation
+
+There's no `dispose()` on the helper. `settings:save` does `appState.stt?.stop(); appState.stt = null` — the gRPC client's channels, keepalive pings, and call credentials are abandoned, not closed. Every settings save during a session spawns a fresh `SpeechClient` and orphans the last. [ipcHandlers.ts:110-114](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/ipcHandlers.ts)
+
+Fix: add `async dispose()` → `this.stop(); await this.client.close()`, call it where `appState.stt` is nulled.
+
+### 3. No teardown on quit or renderer loss — stream rotates forever with no consumer
+
+The only cleanup paths are `stt:stop` and `settings:save`. `will-quit` unregisters shortcuts but leaves STT live [shortcuts.ts:126-128](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/shortcuts.ts). If the renderer crashes/reloads mid-session or the user quits from the tray, `wantOpen` stays true — streams keep opening and rotating every 4 min, billing Speech-to-Text API with nobody listening, and the power-save blocker stays held.
+
+Fix: run the `stt:stop` body from `app.on("before-quit")` and `win.webContents.on("destroyed")`.
+
+### 4. `writeAudio` ignores backpressure — unbounded buffer growth on a slow uplink
+
+`s.write(buf)` return value is discarded [STTHelper.ts:162-172](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/STTHelper.ts). Renderer pumps PCM continuously; if the network lags, the writable's internal buffer grows without bound. Check the return — on `false`, signal the renderer to pause (or cap a queue + drop policy) until `drain`.
+
+### 5. Stale `sttListenerCleanup` after `settings:save`
+
+The helper is nulled but the unsubscribe handle isn't run or cleared [ipcHandlers.ts:112-113](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/ipcHandlers.ts). The orphaned helper gets GC'd so it's not a true leak, but the stale handle lingers until next `stt:start`, and the dying helper's `stop()` still fires a stray `closed` event at the renderer through a listener that should've been detached.
+
+---
+
+Minor notes: `stop()` double-emits `closed` when `streamDown` already fired, and neither timer is `unref()`'d — a pending 4-min `rotateTimer` pins the event loop if `stop()` is ever skipped (which finding #3 makes possible).
+
+Want me to patch it, boss man?

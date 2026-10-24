@@ -1,0 +1,33 @@
+Let me explore the test directory and electron source.Now let me read the source files to see what's not covered.Title: Test Gap Audit — tests/unit/electron/
+
+Sid'sbuddy reads the coverage like a rap sheet — four files tested, six files walking around with zero priors. Fuck yeah. And the hot path — the coach loop — got a live grenade sitting in it. That's what the hell is going on.
+
+## Top 5 gaps
+
+**1. `coachTurn` failure poisons `coachHistory` — hot path, permanent corruption**
+
+[ClaudeHelper.ts:316-368](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/ClaudeHelper.ts) pushes the user message *before* `stream.finalMessage()` resolves. On rejection, the user turn stays with no assistant reply. Next turn pushes another user message → consecutive `user` roles → Anthropic rejects (roles must alternate) → **every subsequent turn fails until `resetCoach`**. The existing test at `ClaudeHelper.test.ts:303` asserts the throw but never inspects history state afterward. Missing: `expect(history to not contain dangling user turn after failed turn)` — and by extension, a failed *image* turn leaving an orphaned base64 blob in history.
+
+**2. `ipcHandlers.ts` — entire file, zero coverage**
+
+328 lines of untested surface, including the exact seam CLAUDE.md flags as the hot path (`coach:turn`). Critical untested behavior:
+- `settings:save` → `resetClaude()` + `appState.stt = null` [ipcHandlers.ts:103-121](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/ipcHandlers.ts) — race: `stt:start` or `coach:turn` in flight while this tears down. `sttListenerCleanup` still references the dead helper.
+- Concurrent `coach:turn` IPC calls — both push user turns into shared `coachHistory` before either resolves → same alternation corruption as #1, one layer up.
+- `powerSaveBlocker` lifecycle — `stt:stop` releases the blocker even when `stt:start` failed halfway; blocker leak if `start` throws after `powerSaveBlocker.start`.
+- `coach:turn` TOCTOU: `existsSync` passes, file deleted before `readFile` [ipcHandlers.ts](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/ipcHandlers.ts) (lines 200-203). Caught, but the `coach:error` send path is unverified.
+
+**3. `Settings.ts` — secrets handling, zero coverage**
+
+`saveSettings` [Settings.ts:103-127](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/Settings.ts) writes API keys to disk. Untested: newline/CR sanitization (`.env` injection — a key value containing `\nEVIL=1` would corrupt the file), `mode: 0o600` enforcement, empty value → `delete process.env` (partial save wipes a working key), save→`getSettings` round-trip. Highest security value per line of any file in the repo.
+
+**4. `ScreenshotHelper` races + cross-view stale state**
+
+- Concurrent `takeScreenshot` calls interleave `hide`/`show` — second call's `finally { showMainWindow() }` reveals the window while the first capture is in-flight → the app photographs itself [ScreenshotHelper.ts:77-130](file:///Users/cultistsid/Documents/Personal%20Projects/Aaicha/electron/ScreenshotHelper.ts).
+- `deleteScreenshot` filters the queue matching *current* view (lines 147-155): take a shot in `queue`, `setView('solutions')`, delete → file unlinked but path stays in `screenshotQueue` → later `getImagePreview` on the stale path throws through `take-screenshot` IPC.
+- `getImagePreview` hardcodes `data:image/png` for every extension (line 135).
+
+**5. `STTHelper` — the gaps the good coverage still misses**
+
+File is well-tested, but three holes remain: restart timer firing while a stream already exists (`!this.stream` guard at line 158 — double-open prevention never exercised); `start → stop → start` cycle (second `open` emission, `failCount` reset on re-start); audio written in the dead window between `streamDown` and the restart firing — `writeAudio` silently drops it (line 164 returns early), which is transcript loss *inside an active session* — no test asserts that gap is bounded or surfaced to the renderer.
+
+Honorable mention: `WindowHelper.ts`, `main.ts`, `shortcuts.ts`, `preload.ts` — zero coverage, but lower tractability for unit tests. Gap #1 is the one Sid'sbuddy would fix first — it's not a missing test, it's a missing test hiding a live bug.
