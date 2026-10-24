@@ -23,7 +23,15 @@
     "test:ai": "vitest run --config vitest.ai.config.ts",
     "devin:check": "bash scripts/devin-check.sh",
     "devin:analyze": "devin analyze --format json",
-    "devin:fix": "devin fix --interactive"
+    "devin:fix": "devin fix --interactive",
+    "qa:full": "bash scripts/qa-full-suite.sh",
+    "qa:unit": "npm run test -- --run --reporter=verbose",
+    "qa:agents": "echo 'Launch QA agents via Claude Code: Agent(qa-unit-tester) and Agent(qa-integration-tester)'",
+    "devin:install": "curl -fsSL https://cli.devin.ai/install.sh | bash && export PATH=\"$HOME/.local/bin:$PATH\"",
+    "devin:status": "devin --version && echo '✅ Devin AI is installed'",
+    "devin:security": "devin security-scan --critical-only",
+    "devin:metrics": "devin metrics --output devin-metrics.json --format markdown",
+    "devin:demo": "bash scripts/devin-demo.sh"
   },
   "build": {
     "appId": "com.sid.aaicha",

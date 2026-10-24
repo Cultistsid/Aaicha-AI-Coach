@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "Aaicha",
+    "description": "Real-time AI interview coach with live transcription and intelligent feedback",
+    "type": "electron-app",
+    "language": "typescript"
+  },
+  "analysis": {
+    "enabled": true,
+    "autofix": false,
+    "rules": {
+      "code-quality": "high",
+      "security": "high",
+      "performance": "medium",
+      "accessibility": "medium"
+    },
+    "exclude": [
+      "node_modules/**",
+      "dist/**",
+      "dist-electron/**",
+      "release/**",
+      "coverage/**",
+      ".vite/**",
+      "*.test.ts",
+      "*.test.tsx"
+    ]
+  },
+  "ai-assist": {
+    "code-review": {
+      "enabled": true,
+      "focus-areas": [
+        "api-key-security",
+        "electron-security",
+        "ipc-validation",
+        "rate-limiting",
+        "error-handling",
+        "memory-leaks"
+      ]
+    },
+    "suggestions": {
+      "enabled": true,
+      "threshold": "medium"
+    }
+  },
+  "integrations": {
+    "git": {
+      "pre-commit": true,
+      "pre-push": false
+    },
+    "ci": {
+      "enabled": true,
+      "fail-on-critical": true
+    }
+  },
+  "hackathon": {
+    "demo-mode": true,
+    "metrics-tracking": true,
+    "showcase-features": [
+      "real-time-stt-coaching",
+      "claude-api-integration",
+      "interview-mode-customization",
+      "screenshot-analysis",
+      "session-scoring"
+    ]
+  }
+}
