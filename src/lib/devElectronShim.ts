@@ -33,6 +33,10 @@ const shim = {
     envPath: "/dev/null (browser shim)"
   }),
   getProductDocs: async () => "",
+  saveProductDocs: async () => ({ success: true }),
+  importProductDocsFile: async () => ({ success: false, canceled: true }),
+  getSalesMode: async () => ({ callType: "discovery" as const }),
+  setSalesMode: async () => ({ success: true }),
   sttStart: async () => {
     sttHandlers.forEach((h) => h({ kind: "status", status: "open" }))
     let i = 0
