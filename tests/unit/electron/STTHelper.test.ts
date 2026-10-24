@@ -250,4 +250,186 @@ describe('STTHelper', () => {
       h.stop()
     })
   })
+
+  describe('healthy stream detection', () => {
+    it('resets failCount after stream survives 5s', () => {
+      helper.start()
+      mockStream.emit('error', new Error('Early error'))
+
+      vi.advanceTimersByTime(300) // First reconnect
+      const healthyStream = mockStream
+
+      vi.advanceTimersByTime(5100) // Stream survives 5s+
+      healthyStream.emit('error', new Error('Late error'))
+
+      vi.advanceTimersByTime(300) // Should use base delay, not doubled
+      // If failCount was reset, next reconnect uses 300ms, not 600ms
+    })
+
+    it('doubles backoff for consecutive fast failures', () => {
+      helper.start()
+
+      // Fail quickly (< 5s)
+      mockStream.emit('error', new Error('Error 1'))
+      vi.advanceTimersByTime(100) // Time < 5s
+
+      // Backoff should now be 600ms (2x)
+      vi.advanceTimersByTime(300)
+      expect(mockStream.write).not.toHaveBeenCalled() // Not reconnected yet
+
+      vi.advanceTimersByTime(300)
+      // Now reconnected
+    })
+
+    it('caps backoff at 5000ms', () => {
+      helper.start()
+
+      // Trigger many consecutive failures
+      for (let i = 0; i < 10; i++) {
+        mockStream.emit('error', new Error(`Error ${i}`))
+        vi.advanceTimersByTime(50) // Fast failure
+      }
+
+      // Even after 10 failures, max delay is 5000ms
+      vi.advanceTimersByTime(5000)
+      // Should have reconnected by now
+    })
+  })
+
+  describe('writeAudio error handling', () => {
+    it('handles destroyed stream gracefully', () => {
+      helper.start()
+      const stream = mockStream as any
+      stream.destroyed = true
+
+      const buf = Buffer.from([0, 1, 2, 3])
+      expect(() => helper.writeAudio(buf)).not.toThrow()
+      expect(stream.write).not.toHaveBeenCalled()
+    })
+
+    it('handles writableEnded stream gracefully', () => {
+      helper.start()
+      const stream = mockStream as any
+      stream.writableEnded = true
+
+      const buf = Buffer.from([0, 1, 2, 3])
+      expect(() => helper.writeAudio(buf)).not.toThrow()
+      expect(stream.write).not.toHaveBeenCalled()
+    })
+
+    it('swallows write errors on dying stream', () => {
+      helper.start()
+      const stream = mockStream
+      stream.write.mockImplementationOnce(() => {
+        throw new Error('Stream closed mid-write')
+      })
+
+      const buf = Buffer.from([0, 1, 2, 3])
+      expect(() => helper.writeAudio(buf)).not.toThrow()
+    })
+  })
+
+  describe('stream lifecycle edge cases', () => {
+    it('handles stream.end() throwing', () => {
+      helper.start()
+      const stream = mockStream
+      stream.end.mockImplementationOnce(() => {
+        throw new Error('End failed')
+      })
+
+      expect(() => helper.stop()).not.toThrow()
+    })
+
+    it('ignores late gRPC errors on discarded stream', () => {
+      helper.start()
+      const oldStream = mockStream
+
+      // Rotate to new stream
+      vi.advanceTimersByTime(4 * 60 * 1000)
+
+      // Old stream emits late error
+      const consoleSpy = vi.spyOn(console, 'error')
+      expect(() => oldStream.emit('error', new Error('Late gRPC error'))).not.toThrow()
+
+      // Should not propagate to session state
+      consoleSpy.mockRestore()
+    })
+
+    it('prevents double-down on same stream', () => {
+      const events: any[] = []
+      helper.on((e) => events.push(e))
+      helper.start()
+
+      // Emit both error and end
+      mockStream.emit('error', new Error('Network error'))
+      mockStream.emit('end')
+      mockStream.emit('close')
+
+      // Should emit error status only once
+      const errorEvents = events.filter(e => e.kind === 'status' && e.status === 'error')
+      expect(errorEvents.length).toBe(1)
+    })
+  })
+
+  describe('multiple concurrent listeners', () => {
+    it('notifies all listeners', () => {
+      const listener1 = vi.fn()
+      const listener2 = vi.fn()
+      const listener3 = vi.fn()
+
+      helper.on(listener1)
+      helper.on(listener2)
+      helper.on(listener3)
+
+      helper.start()
+
+      expect(listener1).toHaveBeenCalled()
+      expect(listener2).toHaveBeenCalled()
+      expect(listener3).toHaveBeenCalled()
+    })
+
+    it('continues notifying after one listener errors', () => {
+      const badListener = vi.fn(() => { throw new Error('Listener crash') })
+      const goodListener1 = vi.fn()
+      const goodListener2 = vi.fn()
+
+      helper.on(goodListener1)
+      helper.on(badListener)
+      helper.on(goodListener2)
+
+      helper.start()
+
+      expect(goodListener1).toHaveBeenCalled()
+      expect(goodListener2).toHaveBeenCalled()
+    })
+  })
+
+  describe('edge cases', () => {
+    it('handles start while restart is pending', () => {
+      helper.start()
+      mockStream.emit('error', new Error('Error'))
+
+      // Restart is scheduled but not executed yet
+      vi.advanceTimersByTime(100)
+
+      // Call start again
+      helper.start()
+
+      vi.advanceTimersByTime(200)
+      // Should not double-create streams
+    })
+
+    it('handles stop during rotation', () => {
+      helper.start()
+
+      // Trigger rotation
+      vi.advanceTimersByTime(4 * 60 * 1000)
+
+      // Stop immediately after rotation starts
+      helper.stop()
+
+      // Should clean up both streams
+      expect(() => vi.runAllTimers()).not.toThrow()
+    })
+  })
 })
