@@ -1,6 +1,6 @@
 import { AppState } from "./main"
 import { ClaudeHelper } from "./ClaudeHelper"
-import { getBackground } from "./Settings"
+import { getProductDocs } from "./Settings"
 
 export class ProcessingHelper {
   private appState: AppState
@@ -17,7 +17,7 @@ export class ProcessingHelper {
   public getClaude(): ClaudeHelper {
     if (!this.claude) {
       this.claude = new ClaudeHelper()
-      this.claude.setBackground(getBackground())
+      this.claude.setProductDocs(getProductDocs())
       console.log(
         `[ProcessingHelper] Using Claude (${this.claude.getCurrentModel()})`
       )
@@ -30,9 +30,9 @@ export class ProcessingHelper {
     this.claude = null
   }
 
-  // Called when the background changes; live update without dropping history.
-  public refreshBackground(): void {
-    this.claude?.setBackground(getBackground())
+  // Called when product docs change; live update without dropping history.
+  public refreshProductDocs(): void {
+    this.claude?.setProductDocs(getProductDocs())
   }
 
   // Vestigial — invoked by the Cmd+Enter / Cmd+R global shortcuts.

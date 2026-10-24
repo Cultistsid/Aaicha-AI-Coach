@@ -288,7 +288,7 @@ export class AppState {
       }
     ])
     
-    this.tray.setToolTip('Aaicha — Press Cmd+Shift+Space to show')
+    this.tray.setToolTip('Aaicha Sales Assistant — Press Cmd+Shift+Space to show')
     this.tray.setContextMenu(contextMenu)
     
     // Set a title for macOS (will appear in menu bar)

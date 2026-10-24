@@ -119,10 +119,10 @@ describe('ClaudeHelper', () => {
     })
   })
 
-  describe('setBackground', () => {
-    it('trims and stores background text', () => {
-      helper.setBackground('  My resume  ')
-      // Background gets included in system prompt on next coachTurn
+  describe('setProductDocs', () => {
+    it('trims and stores product docs text', () => {
+      helper.setProductDocs('  Our pricing sheet  ')
+      // Product docs get included in system prompt on next coachTurn
     })
   })
 

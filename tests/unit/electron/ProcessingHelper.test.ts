@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const createMockClaude = () => ({
-  setBackground: vi.fn(),
+  setProductDocs: vi.fn(),
   getCurrentModel: vi.fn().mockReturnValue('chat=opus, coach=haiku')
 })
 
@@ -10,7 +10,7 @@ vi.mock('@electron/ClaudeHelper', () => ({
 }))
 
 vi.mock('@electron/Settings', () => ({
-  getBackground: vi.fn().mockReturnValue('Mock resume text')
+  getProductDocs: vi.fn().mockReturnValue('Mock product docs')
 }))
 
 describe('ProcessingHelper', () => {
@@ -58,7 +58,7 @@ describe('ProcessingHelper', () => {
     it('lazily initializes Claude helper', () => {
       const claude = helper.getClaude()
       expect(claude).toBeDefined()
-      expect(claude.setBackground).toHaveBeenCalledWith('Mock resume text')
+      expect(claude.setProductDocs).toHaveBeenCalledWith('Mock product docs')
     })
 
     it('returns same instance on subsequent calls', () => {
@@ -91,19 +91,19 @@ describe('ProcessingHelper', () => {
     })
   })
 
-  describe('refreshBackground', () => {
-    it('updates background on existing instance', async () => {
-      const { getBackground } = await import('@electron/Settings')
-      vi.mocked(getBackground).mockReturnValue('Updated resume')
+  describe('refreshProductDocs', () => {
+    it('updates product docs on existing instance', async () => {
+      const { getProductDocs } = await import('@electron/Settings')
+      vi.mocked(getProductDocs).mockReturnValue('Updated product docs')
 
       const claude = helper.getClaude()
-      helper.refreshBackground()
+      helper.refreshProductDocs()
 
-      expect(claude.setBackground).toHaveBeenCalledWith('Updated resume')
+      expect(claude.setProductDocs).toHaveBeenCalledWith('Updated product docs')
     })
 
     it('does nothing if Claude not initialized yet', () => {
-      expect(() => helper.refreshBackground()).not.toThrow()
+      expect(() => helper.refreshProductDocs()).not.toThrow()
     })
   })
 

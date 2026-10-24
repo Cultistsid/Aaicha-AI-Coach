@@ -32,7 +32,7 @@ const shim = {
     settings: {},
     envPath: "/dev/null (browser shim)"
   }),
-  getBackground: async () => "",
+  getProductDocs: async () => "",
   sttStart: async () => {
     sttHandlers.forEach((h) => h({ kind: "status", status: "open" }))
     let i = 0

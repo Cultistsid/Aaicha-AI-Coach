@@ -11,40 +11,32 @@ export interface AaichaSettings {
   claudeCoachModel?: string
 }
 
-export interface InterviewMode {
-  type: 'case' | 'technical' | 'behavioral' | 'mixed'
-  persona: 'partner' | 'manager' | 'senior-consultant'
-  difficulty: 'intern' | 'analyst' | 'senior-analyst'
-  company: 'deloitte' | 'generic'
+export interface SalesMode {
+  callType: 'discovery' | 'demo' | 'objection-handling' | 'closing'
 }
 
-const DEFAULT_INTERVIEW_MODE: InterviewMode = {
-  type: 'mixed',
-  persona: 'manager',
-  difficulty: 'analyst',
-  company: 'generic'
+const DEFAULT_SALES_MODE: SalesMode = { callType: 'discovery' }
+
+let currentSalesMode: SalesMode = { ...DEFAULT_SALES_MODE }
+
+export function getSalesMode(): SalesMode {
+  return { ...currentSalesMode }
 }
 
-let currentInterviewMode: InterviewMode = { ...DEFAULT_INTERVIEW_MODE }
-
-export function getInterviewMode(): InterviewMode {
-  return { ...currentInterviewMode }
-}
-
-export function setInterviewMode(mode: InterviewMode): void {
-  currentInterviewMode = { ...mode }
+export function setSalesMode(mode: SalesMode): void {
+  currentSalesMode = { ...mode }
 }
 
 export function userEnvPath(): string {
   return path.join(app.getPath("userData"), ".env")
 }
 
-export function backgroundPath(): string {
-  return path.join(app.getPath("userData"), "background.txt")
+export function productDocsPath(): string {
+  return path.join(app.getPath("userData"), "product-docs.txt")
 }
 
-export function getBackground(): string {
-  const p = backgroundPath()
+export function getProductDocs(): string {
+  const p = productDocsPath()
   if (!fs.existsSync(p)) return ""
   try {
     return fs.readFileSync(p, "utf8")
@@ -53,8 +45,8 @@ export function getBackground(): string {
   }
 }
 
-export function saveBackground(text: string): void {
-  const p = backgroundPath()
+export function saveProductDocs(text: string): void {
+  const p = productDocsPath()
   fs.mkdirSync(path.dirname(p), { recursive: true })
   const trimmed = text.trim()
   if (!trimmed) {

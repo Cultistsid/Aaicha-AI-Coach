@@ -6,18 +6,18 @@ import {
   getSettings,
   saveSettings,
   AaichaSettings,
-  getBackground,
-  saveBackground,
-  getInterviewMode,
-  setInterviewMode,
-  InterviewMode
+  getProductDocs,
+  saveProductDocs,
+  getSalesMode,
+  setSalesMode,
+  SalesMode
 } from "./Settings"
 import fs from "fs"
 
 let sttListenerCleanup: (() => void) | null = null
 
 // Held while a listening session runs so macOS App Nap can't suspend audio
-// processing mid-interview.
+// processing mid-call.
 let sttPowerBlockerId: number | null = null
 
 function releaseSttPowerBlocker(): void {
@@ -34,12 +34,12 @@ export function initializeIpcHandlers(appState: AppState): void {
 
   ipcMain.handle("settings:get", async () => getSettings())
 
-  ipcMain.handle("background:get", async () => getBackground())
+  ipcMain.handle("productDocs:get", async () => getProductDocs())
 
-  ipcMain.handle("background:save", async (_event, text: string) => {
+  ipcMain.handle("productDocs:save", async (_event, text: string) => {
     try {
-      saveBackground(text || "")
-      appState.processingHelper.refreshBackground()
+      saveProductDocs(text || "")
+      appState.processingHelper.refreshProductDocs()
       return { success: true }
     } catch (err: any) {
       return { success: false, error: err?.message || String(err) }
@@ -47,9 +47,9 @@ export function initializeIpcHandlers(appState: AppState): void {
   })
 
   // Pick a .pdf / .docx / .txt / .md and return its extracted text.
-  ipcMain.handle("background:import-file", async () => {
+  ipcMain.handle("productDocs:import-file", async () => {
     const pickOpts: Electron.OpenDialogOptions = {
-      title: "Import résumé",
+      title: "Import product docs",
       properties: ["openFile"],
       filters: [
         { name: "Documents", extensions: ["pdf", "docx", "txt", "md"] }
@@ -92,7 +92,7 @@ export function initializeIpcHandlers(appState: AppState): void {
       text = text.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim()
       return { success: true, text, filename: filePath.split("/").pop() }
     } catch (err: any) {
-      console.error("[background:import-file] parse failed:", err)
+      console.error("[productDocs:import-file] parse failed:", err)
       return {
         success: false,
         error: err?.message || "Failed to read file"
@@ -266,12 +266,12 @@ export function initializeIpcHandlers(appState: AppState): void {
     }
   })
 
-  // ----- Interview Mode -----
+  // ----- Sales Mode -----
 
-  ipcMain.handle("interview:getMode", async () => getInterviewMode())
+  ipcMain.handle("sales:getMode", async () => getSalesMode())
 
-  ipcMain.handle("interview:setMode", async (_event, mode: InterviewMode) => {
-    setInterviewMode(mode)
+  ipcMain.handle("sales:setMode", async (_event, mode: SalesMode) => {
+    setSalesMode(mode)
     return { success: true }
   })
 

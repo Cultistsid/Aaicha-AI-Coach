@@ -6,11 +6,8 @@ export interface AaichaSettings {
   claudeCoachModel?: string
 }
 
-export interface InterviewMode {
-  type: 'case' | 'technical' | 'behavioral' | 'mixed'
-  persona: 'partner' | 'manager' | 'senior-consultant'
-  difficulty: 'intern' | 'analyst' | 'senior-analyst'
-  company: 'deloitte' | 'generic'
+export interface SalesMode {
+  callType: 'discovery' | 'demo' | 'objection-handling' | 'closing'
 }
 
 export interface ElectronAPI {
@@ -62,11 +59,11 @@ export interface ElectronAPI {
     settings: AaichaSettings
   ) => Promise<{ success: boolean; error?: string }>
 
-  getBackground: () => Promise<string>
-  saveBackground: (
+  getProductDocs: () => Promise<string>
+  saveProductDocs: (
     text: string
   ) => Promise<{ success: boolean; error?: string }>
-  importBackgroundFile: () => Promise<{
+  importProductDocsFile: () => Promise<{
     success: boolean
     canceled?: boolean
     text?: string
@@ -89,8 +86,8 @@ export interface ElectronAPI {
     callback: (data: { active: boolean }) => void
   ) => () => void
 
-  getInterviewMode: () => Promise<InterviewMode>
-  setInterviewMode: (mode: InterviewMode) => Promise<{ success: boolean }>
+  getSalesMode: () => Promise<SalesMode>
+  setSalesMode: (mode: SalesMode) => Promise<{ success: boolean }>
 
   testConnection: () => Promise<{ success: boolean; error?: string }>
 

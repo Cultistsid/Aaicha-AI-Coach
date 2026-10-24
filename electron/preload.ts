@@ -60,11 +60,11 @@ interface ElectronAPI {
     claudeCoachModel?: string
   }) => Promise<{ success: boolean; error?: string }>
 
-  getBackground: () => Promise<string>
-  saveBackground: (
+  getProductDocs: () => Promise<string>
+  saveProductDocs: (
     text: string
   ) => Promise<{ success: boolean; error?: string }>
-  importBackgroundFile: () => Promise<{
+  importProductDocsFile: () => Promise<{
     success: boolean
     canceled?: boolean
     text?: string
@@ -156,10 +156,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   saveSettings: (settings: unknown) =>
     ipcRenderer.invoke("settings:save", settings),
 
-  getBackground: () => ipcRenderer.invoke("background:get"),
-  saveBackground: (text: string) =>
-    ipcRenderer.invoke("background:save", text),
-  importBackgroundFile: () => ipcRenderer.invoke("background:import-file"),
+  getProductDocs: () => ipcRenderer.invoke("productDocs:get"),
+  saveProductDocs: (text: string) =>
+    ipcRenderer.invoke("productDocs:save", text),
+  importProductDocsFile: () => ipcRenderer.invoke("productDocs:import-file"),
 
   testConnection: () => ipcRenderer.invoke("claude:test"),
 
@@ -176,8 +176,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onStealthState: (callback: (data: { active: boolean }) => void) =>
     subscribe("stealth:state", callback),
 
-  getInterviewMode: () => ipcRenderer.invoke("interview:getMode"),
-  setInterviewMode: (mode: any) => ipcRenderer.invoke("interview:setMode", mode),
+  getSalesMode: () => ipcRenderer.invoke("sales:getMode"),
+  setSalesMode: (mode: any) => ipcRenderer.invoke("sales:setMode", mode),
 
   // STT
   sttStart: () => ipcRenderer.invoke("stt:start"),

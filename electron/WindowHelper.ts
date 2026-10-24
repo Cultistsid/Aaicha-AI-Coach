@@ -104,7 +104,7 @@ export class WindowHelper {
       focusable: true,
       resizable: true,
       movable: true,
-      title: "Aaicha",
+      title: "Aaicha Sales Assistant",
       x: 100,
       y: 100
     }
@@ -331,8 +331,8 @@ export class WindowHelper {
   }
 
   // Shrinks window, dims it, and centers near the top edge (under macOS
-  // notch). Designed so a glance at the overlay reads like a glance at the
-  // interviewer's webcam area.
+  // notch). Designed so a glance at the overlay stays close to the other
+  // participant's webcam area.
   public enterOverlay(): void {
     if (!this.mainWindow || this.mainWindow.isDestroyed()) return
     if (this.overlayActive) return
