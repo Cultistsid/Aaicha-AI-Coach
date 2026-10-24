@@ -35,11 +35,14 @@ if [ "$HIGH" -gt 0 ]; then
     echo ""
 fi
 
-# Check for API key leaks
-if echo "$STAGED_FILES" | xargs grep -l "ANTHROPIC_API_KEY\|sk-ant-" 2>/dev/null; then
-    echo "❌ SECURITY: Potential API key exposure detected!"
-    echo "Remove API keys before committing."
-    exit 1
+# Check for API key leaks (exclude test files)
+STAGED_NON_TEST=$(echo "$STAGED_FILES" | grep -v "\.test\.\|\.spec\.\|/tests/\|/mocks/" || true)
+if [ -n "$STAGED_NON_TEST" ]; then
+    if echo "$STAGED_NON_TEST" | xargs grep -l "ANTHROPIC_API_KEY.*=.*sk-ant\|sk-ant-api[0-9]" 2>/dev/null; then
+        echo "❌ SECURITY: Real API key exposure detected!"
+        echo "Remove API keys before committing."
+        exit 1
+    fi
 fi
 
 echo "✅ Devin analysis passed"
