@@ -78,12 +78,16 @@ export function loadEnv(): void {
   }
 }
 
-export function getSettings(): { configured: boolean; settings: AaichaSettings; envPath: string } {
+// The API key never crosses IPC — the renderer only learns whether one is set.
+export function getSettings(): {
+  configured: boolean
+  settings: Omit<AaichaSettings, "anthropicApiKey">
+  envPath: string
+} {
   return {
     configured: !!process.env.ANTHROPIC_API_KEY,
     envPath: userEnvPath(),
     settings: {
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY,
       googleCloudProject: process.env.GOOGLE_CLOUD_PROJECT,
       googleCloudLocation: process.env.GOOGLE_CLOUD_LOCATION,
       claudeChatModel: process.env.CLAUDE_CHAT_MODEL,
@@ -100,7 +104,12 @@ const FIELDS: Array<[keyof AaichaSettings, string]> = [
   ["claudeCoachModel", "CLAUDE_COACH_MODEL"]
 ]
 
-export function saveSettings(s: AaichaSettings): void {
+export function saveSettings(input: AaichaSettings): void {
+  // Blank key field means "keep the saved key" since the renderer never sees it.
+  const s: AaichaSettings = {
+    ...input,
+    anthropicApiKey: input.anthropicApiKey?.trim() || process.env.ANTHROPIC_API_KEY
+  }
   const userPath = userEnvPath()
   fs.mkdirSync(path.dirname(userPath), { recursive: true })
 

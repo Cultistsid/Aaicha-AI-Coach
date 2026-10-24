@@ -136,6 +136,9 @@ export class STTHelper {
     const old = this.stream
     // Open the new stream BEFORE nulling the old one — avoids audio gap
     this.openStream()
+    // openStream swallows its own errors; if it failed, this.stream still
+    // points at `old`, which would make scheduleRestart's guard skip forever.
+    if (this.stream === old) this.stream = null
     if (old) {
       old.removeAllListeners()
       old.on("error", () => {}) // late gRPC errors on a discarded stream

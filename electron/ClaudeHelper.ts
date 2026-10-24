@@ -313,7 +313,9 @@ export class ClaudeHelper {
     if (this.coachHistory.length >= 38) {
       this.coachHistory = this.coachHistory.slice(-36)
     }
-    this.coachHistory.push({ role: "user", content: userContent })
+    // Committed to history only after a successful reply — a failed turn must
+    // not leave a dangling user message (consecutive user roles → API 400).
+    const userTurn = { role: "user" as const, content: userContent }
 
     // System: rules block (cached) + optional candidate-background block
     // (also cached). Both stable across a session → near-free after the first
@@ -352,7 +354,7 @@ export class ClaudeHelper {
       model: COACH_MODEL,
       max_tokens: COACH_MAX_TOKENS,
       system,
-      messages: this.coachHistory.map((m) => ({
+      messages: [...this.coachHistory, userTurn].map((m) => ({
         role: m.role,
         content: m.content
       }))
@@ -364,7 +366,7 @@ export class ClaudeHelper {
 
     const final = await stream.finalMessage()
     const reply = this.extractText(final)
-    this.coachHistory.push({ role: "assistant", content: reply })
+    this.coachHistory.push(userTurn, { role: "assistant", content: reply })
     return reply
   }
 

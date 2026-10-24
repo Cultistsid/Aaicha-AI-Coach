@@ -2,7 +2,8 @@ import { useEffect, useState } from "react"
 import { AaichaSettings } from "../types/electron"
 
 interface SetupProps {
-  initial?: AaichaSettings
+  initial?: Omit<AaichaSettings, "anthropicApiKey">
+  keyConfigured?: boolean
   envPath?: string
   onSaved: () => void
   // If true, render as a settings modal (with a back / cancel button); if
@@ -13,12 +14,14 @@ interface SetupProps {
 
 export function Setup({
   initial,
+  keyConfigured,
   envPath,
   onSaved,
   asModal,
   onClose
 }: SetupProps) {
-  const [anthropicApiKey, setKey] = useState(initial?.anthropicApiKey || "")
+  const [anthropicApiKey, setKey] = useState("")
+  const keyMissing = !keyConfigured && !anthropicApiKey.trim()
   const [googleCloudProject, setProject] = useState(
     initial?.googleCloudProject || ""
   )
@@ -41,7 +44,7 @@ export function Setup({
 
   // Auto-focus the first empty field
   useEffect(() => {
-    const target = !anthropicApiKey ? "key" : !googleCloudProject ? "proj" : null
+    const target = keyMissing ? "key" : !googleCloudProject ? "proj" : null
     if (target) {
       const el = document.getElementById(target) as HTMLInputElement | null
       el?.focus()
@@ -51,14 +54,14 @@ export function Setup({
 
   const handleSave = async () => {
     setError(null)
-    if (!anthropicApiKey.trim()) {
+    if (keyMissing) {
       setError("Anthropic API key is required.")
       return
     }
     setSaving(true)
     const [r1, r2] = await Promise.all([
       window.electronAPI.saveSettings({
-        anthropicApiKey: anthropicApiKey.trim(),
+        anthropicApiKey: anthropicApiKey.trim() || undefined,
         googleCloudProject: googleCloudProject.trim() || undefined,
         googleCloudLocation: googleCloudLocation.trim() || undefined
       }),
@@ -122,7 +125,7 @@ export function Setup({
                 type={showKey ? "text" : "password"}
                 value={anthropicApiKey}
                 onChange={(e) => setKey(e.target.value)}
-                placeholder="sk-ant-..."
+                placeholder={keyConfigured ? "Saved — leave blank to keep" : "sk-ant-..."}
                 className="flex-1 font-mono text-[12.5px] px-3 py-2 rounded-lg border border-line bg-white focus:border-coral-soft focus:outline-none"
               />
               <button
@@ -240,7 +243,7 @@ export function Setup({
         <div className="mt-8 flex items-center gap-3">
           <button
             onClick={handleSave}
-            disabled={saving || !anthropicApiKey.trim()}
+            disabled={saving || keyMissing}
             className="px-5 py-2.5 rounded-lg bg-ink text-paper hover:bg-coral-deep text-[13.5px] font-medium transition-colors disabled:bg-ink-faint disabled:cursor-not-allowed"
           >
             {saving ? "Saving…" : asModal ? "Save" : "Save and continue"}

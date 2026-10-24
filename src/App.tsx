@@ -8,7 +8,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [configured, setConfigured] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [initial, setInitial] = useState<AaichaSettings | undefined>(undefined)
+  const [initial, setInitial] = useState<Omit<AaichaSettings, "anthropicApiKey"> | undefined>(undefined)
   const [envPath, setEnvPath] = useState<string | undefined>(undefined)
 
   const refresh = useCallback(async () => {
@@ -36,6 +36,7 @@ const App: React.FC = () => {
     return (
       <Setup
         initial={initial}
+        keyConfigured={configured}
         envPath={envPath}
         onSaved={() => {
           refresh()
@@ -48,6 +49,7 @@ const App: React.FC = () => {
     return (
       <Setup
         initial={initial}
+        keyConfigured={configured}
         envPath={envPath}
         asModal
         onClose={() => setShowSettings(false)}

@@ -56,7 +56,7 @@ export interface ElectronAPI {
   getSettings: () => Promise<{
     configured: boolean
     envPath: string
-    settings: AaichaSettings
+    settings: Omit<AaichaSettings, "anthropicApiKey">
   }>
   saveSettings: (
     settings: AaichaSettings

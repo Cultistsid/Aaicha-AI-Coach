@@ -46,7 +46,6 @@ interface ElectronAPI {
     configured: boolean
     envPath: string
     settings: {
-      anthropicApiKey?: string
       googleCloudProject?: string
       googleCloudLocation?: string
       claudeChatModel?: string
