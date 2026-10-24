@@ -4,8 +4,6 @@ A small desktop window that sits next to me during the day. Type a question, pas
 
 **[📄 Hackathon Submission Details](HACKATHON.md)**
 
-Built for myself. Probably broken in ways I haven't noticed yet.
-
 ## What it uses
 
 - Electron + React for the shell
