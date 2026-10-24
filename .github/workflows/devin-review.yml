@@ -1,0 +1,29 @@
+name: Devin AI Code Review
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  devin-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Devin CLI
+        run: curl -fsSL https://cli.devin.ai/install.sh | bash
+
+      - name: Run Devin Code Review
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          devin analyze --format json > devin-report.json || true
+        env:
+          DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+
+      - name: Upload Devin Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: devin-analysis
+          path: devin-report.json

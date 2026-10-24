@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d68068"/>
+      <stop offset="1" stop-color="#bf6e53"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dy="6"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="1024" height="1024" rx="230" ry="230" fill="url(#bg)"/>
+  <rect x="14" y="14" width="996" height="996" rx="218" ry="218" fill="none" stroke="#a85b40" stroke-width="3" opacity="0.5"/>
+  <g filter="url(#shadow)">
+    <text x="512" y="730"
+          text-anchor="middle"
+          font-family="Georgia, 'New York', 'Times New Roman', serif"
+          font-weight="400"
+          font-style="italic"
+          font-size="780"
+          fill="#faf9f5">A</text>
+  </g>
+</svg>
