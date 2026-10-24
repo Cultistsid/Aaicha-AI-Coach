@@ -7,19 +7,19 @@ const coachDelta = new Set<Handler>()
 const coachDone = new Set<Handler>()
 
 const SCRIPT = [
-  "Tell me about a time you had to clean really messy data.",
-  "Walk me through how you'd design an orders API.",
-  "Why do you want to work here?"
+  "Honestly, your pricing looks high compared to what we're using now.",
+  "We already have a tool that kind of does this.",
+  "I'd need to get my VP on board before we could move forward."
 ]
 
 const COACH_REPLY = [
-  "**Answer:** I'd lead with the corrupt `ordered_by` rows. ",
-  "Six RECEIVED rows named a different person entirely — ",
-  "the fix was reading the field only from the PENDING row, ",
-  "so corruption never even needs detecting.\n\n",
-  "```python\nby = group[group.status == 'PENDING'].iloc[0].ordered_by\n",
-  "# only the authoritative row — corrupt rows are ignored by construction\n```\n",
-  "Close with the mutation-testing story if they push on QA."
+  "**Say:** \"Totally fair — can I ask what you're comparing us against?\" ",
+  "Isolate whether it's price or value before you defend the number.\n\n",
+  "Then reframe against the cost of the status quo: ",
+  "the current tool is the thing leaving the gap they just described.\n\n",
+  "- Acknowledge first, never argue\n",
+  "- One isolating question, then proof\n",
+  "Close by offering to loop the VP in with a short tailored walkthrough."
 ]
 
 let sttTimer: number | null = null
